@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Directory containing the files
+dir_path="/var/www/html/esxi/backup"
+
+# Log directory and file
+log_dir="/home/pulsys/logs"
+log_file="${log_dir}/delete-old-files.txt"
+
+# Ensure the log directory exists
+mkdir -p "$log_dir"
+
+# Current date minus two months
+current_date=$(date +%Y%m%d)
+cutoff_date=$(date -d "$current_date -2 months" +%Y%m%d)
+
+# Dry-run flag (set to 1 to enable dry run mode)
+dry_run=0
+
+# Start logging
+echo "Starting deletion process on $(date)" >> "$log_file"
+
+# Find and evaluate files older than the cutoff date
+find "$dir_path" -type f | while read -r file; do
+  # Extract the date part from the filename (assuming format: *YYYYMMDD*)
+  file_date=$(echo "$file" | grep -oP '\d{8}' | head -1)
+
+  # Check if a date was found
+  if [[ -n "$file_date" ]]; then
+    # Compare the extracted date with the cutoff date
+    if [[ "$file_date" -lt "$cutoff_date" ]]; then
+      echo "File to delete: $file" >> "$log_file"
+      if [[ "$dry_run" -eq 0 ]]; then
+        rm "$file"
+        echo "Deleted file: $file" >> "$log_file"
+      else
+        echo "Dry-run: Would delete file: $file" >> "$log_file"
+      fi
+    fi
+  else
+    echo "No valid date found in filename: $file" >> "$log_file"
+  fi
+done
+
+# Finish logging
+echo "Deletion process completed on $(date)" >> "$log_file"
+
+echo "Process complete. Check the log at $log_file for details."
