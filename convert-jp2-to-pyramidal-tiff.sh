@@ -2,7 +2,7 @@
 
 # Check if the input argument is provided
 if [ -z "$1" ]; then
-    echo "Usage: ./bash_script.sh <input-jp2-file>"
+    echo "Usage: .//convert-jp2-to-pyramidal-tiff.sh <input-jp2-file>"
     exit 1
 fi
 
