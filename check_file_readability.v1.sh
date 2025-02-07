@@ -1,7 +1,7 @@
 #!/bin/bash
 #------------------------------------------------------------------------------
 # Variables:
-LOGFILE="/ifs/systems/scripts/check_file_readability.txt"
+LOGFILE="/ifs/systems/scripts/check_file_readability.v2.txt"
 TIMEOUT_DURATION=100
 DIRECTORY_START_PATH="/ifs/hydra/binaries/ingest_scratch/"
 TOTAL_FILES=187340
