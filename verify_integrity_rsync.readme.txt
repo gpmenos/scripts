@@ -26,3 +26,5 @@ As rsync outputs progress information, the script’s while loop writes each lin
 
 Logging Completion:
 When rsync finishes, the script logs a final completion message.
+
+This script verifies data integrity using rsync with checksum verification and by logging progress without adding significant overhead to the process.
