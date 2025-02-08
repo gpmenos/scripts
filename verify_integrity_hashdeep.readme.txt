@@ -1,0 +1,28 @@
+Variable Setup:
+The script defines paths for the source directory, destination directory, log file, and a temporary manifest file.
+
+Logging Function:
+A log function prefixes messages with a timestamp and writes them to the log file.
+
+Manifest Generation:
+The command
+
+hashdeep -r "$SOURCE" > "$MANIFEST"
+
+recursively scans the source directory and writes a manifest file containing the hash for each file.
+
+Counting Files:
+The script counts the number of lines (i.e. files) in the manifest so that it can calculate an approximate progress percentage during verification.
+
+Verification:
+The command
+
+hashdeep -r -a -k "$MANIFEST" "$DEST"
+
+recursively verifies the destination directory against the manifest. The -a option tells hashdeep to audit files against the manifest, and -k specifies the manifest file.
+As hashdeep produces output, the script reads each line, increments a counter, calculates the percentage complete, and logs the line along with the progress.
+
+Completion:
+When verification is complete, a final message is logged.
+
+This script offers a practical way to verify large amounts of data using hashdeep with real‑time logging and an approximate progress indicator.
