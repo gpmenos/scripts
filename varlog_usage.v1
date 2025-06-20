@@ -1,0 +1,34 @@
+#!/bin/bash
+
+version="1.0.1"
+build="$(date '+%Y-%m-%d %H:%M %Z')"
+
+if [[ "$1" == --version || "$1" == -v ]]; then
+  echo "varlog_usage v$version (built $build)"
+  exit 0
+fi
+
+warn="${1:-50}"
+crit="${2:-90}"
+
+# 1. Get total size in KB for filesystem containing /var/log
+fs_output=$(df -kP /var/log | awk 'NR==2')
+total_kb_fs=$(echo "$fs_output" | awk '{print $2}')
+
+# 2. Get /var/log size in KB
+log_kb=$(du -sk /var/log | awk '{print $1}')
+
+# 3. Calculate percentage (rounded)
+used_pct=$(( (log_kb * 100 + total_kb_fs/2) / total_kb_fs ))
+
+# 4. Determine alert state
+if (( used_pct >= crit )); then
+  state=2; status="CRITICAL"
+elif (( used_pct >= warn )); then
+  state=1; status="WARNING"
+else
+  state=0; status="OK"
+fi
+
+# 5. Output for Checkmk
+echo "$state varlog_usage - /var/log occupies ${used_pct}% of filesystem ($status) [v$version @ $build] | log_pct=${used_pct}%;${warn};${crit};0;100 log_kb=${log_kb}KB;;;0;${total_kb_fs}"
