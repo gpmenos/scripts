@@ -1,0 +1,46 @@
+#!/bin/bash
+
+version="1.0.2"
+build="$(date '+%Y-%m-%d %H:%M %Z')"
+
+# Support version flag
+if [[ "$1" == --version || "$1" == -v ]]; then
+    echo "varlog_usage v$version (built $build)"
+    exit 0
+fi
+
+warn="${1:-50}"
+crit="${2:-90}"
+target_dir="/var/log"
+
+# 1. Total size of filesystem
+fs_output=$(df -kP "$target_dir" | awk 'NR==2')
+total_kb_fs=$(echo "$fs_output" | awk '{print $2}')
+
+# 2. Compute log directory usage, including internal symlinks
+log_kb=$(
+  find "$target_dir" \( -type f -o -type l \) | while read -r path; do
+    if [[ -L "$path" ]]; then
+      resolved=$(readlink -f "$path")
+      # Only count if still under target_dir
+      [[ "$resolved" == "$target_dir"* ]] || continue
+      path="$resolved"
+    fi
+    stat -c '%s' "$path"
+  done | awk '{sum += $1} END {print int(sum/1024)}'
+)
+
+# 3. Compute percentage
+used_pct=$(( (log_kb * 100 + total_kb_fs/2) / total_kb_fs ))
+
+# 4. Determine state
+if (( used_pct >= crit )); then
+    state=2; status="CRITICAL"
+elif (( used_pct >= warn )); then
+    state=1; status="WARNING"
+else
+    state=0; status="OK"
+fi
+
+# 5. Output with performance data
+echo "$state varlog_usage - $target_dir occupies ${used_pct}% of filesystem ($status) [v$version @ $build] | log_pct=${used_pct}%;${warn};${crit};0;100 log_kb=${log_kb}KB;;;0;${total_kb_fs}"
