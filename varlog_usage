@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Checkmk local check to monitor directory usage with parameterized thresholds
+
+# -----------------------
+# Configuration
+# -----------------------
+target_dir="/var/log"
+warn="${1:-50}"    # Default to 50% if not provided
+crit="${2:-90}"    # Default to 90% if not provided
+
+# -----------------------
+# Data Collection
+# -----------------------
+df_output=$(df -P "$target_dir" | awk 'NR==2')
+used_pct=$(echo "$df_output" | awk '{print $5}' | tr -d '%')
+total_kb=$(echo "$df_output" | awk '{print $2}')
+used_kb=$(echo "$df_output" | awk '{print $3}')
+avail_kb=$(echo "$df_output" | awk '{print $4}')
+
+# -----------------------
+# State Determination
+# -----------------------
+if [ "$used_pct" -ge "$crit" ]; then
+    state=2
+    status="CRITICAL"
+elif [ "$used_pct" -ge "$warn" ]; then
+    state=1
+    status="WARNING"
+else
+    state=0
+    status="OK"
+fi
+
+# -----------------------
+# Output for Checkmk
+# -----------------------
+echo "$state varlog_usage - $target_dir usage is ${used_pct}% ($status) | used_pct=${used_pct}%;${warn};${crit};0;100 used_kb=${used_kb}KB;;;0;${total_kb} avail_kb=${avail_kb}KB;;;0;${total_kb}"
